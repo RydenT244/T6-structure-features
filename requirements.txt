@@ -1,3 +1,5 @@
 biotite
 numpy
 pandas
+scikit-learn
+huggingface_hub
