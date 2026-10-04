@@ -1,7 +1,6 @@
 from pathlib import Path
 
 import pandas as pd
-import numpy as np
 
 from sklearn.model_selection import train_test_split
 from sklearn.tree import DecisionTreeRegressor
@@ -59,17 +58,56 @@ RESIDUE_FEATURES = [
     for residue in SELECTED_RESIDUES
 ]
 
-CORE_PLUS_RESIDUES_ID = [
-        "fe_n_min_dist",
-        "fe_n_angle",
-        "n_contacts",
-    ] + RESIDUE_FEATURES
+CORE_PLUS_RESIDUES_ID = (
+    CORE_FEATURES + RESIDUE_FEATURES
+)
+
+HEME_PROXIMITY_FEATURES = [
+    "ligand_centroid_fe_dist",
+    "ligand_atoms_within_4A_fe",
+    "ligand_atoms_within_5A_fe",
+    "ligand_atoms_within_6A_fe",
+]
+
+CORE_HEME_PROXIMITY = (
+    CORE_FEATURES
+    + HEME_PROXIMITY_FEATURES
+)
+
+BURIEDNESS_FEATURES = [
+    "mean_protein_neighbors_4A",
+    "mean_protein_neighbors_5A",
+    "mean_protein_neighbors_6A",
+    "max_protein_neighbors_5A",
+]
+
+CORE_PLUS_BURIEDNESS = (
+    CORE_FEATURES
+    + BURIEDNESS_FEATURES
+)
+
+CONTACT_COMPOSITION_FEATURES = [
+    "hydrophobic_contact_residues",
+    "aromatic_contact_residues",
+    "polar_contact_residues",
+    "positive_contact_residues",
+    "negative_contact_residues",
+    "other_contact_residues",
+]
+
+CORE_PLUS_CONTACT_COMPOSITION = (
+    CORE_FEATURES
+    + CONTACT_COMPOSITION_FEATURES
+)
 
 feature_sets = {
     "geometry_only": GEOMETRY_FEATURES,
     "core_structure": CORE_FEATURES,
     "core_plus_contact_residues": CORE_CONTACT_RESIDUES,
-    "core_plus_residue_identity": CORE_PLUS_RESIDUES_ID
+    "core_plus_residue_identity": CORE_PLUS_RESIDUES_ID,
+    "core_plus_heme_proximity": CORE_HEME_PROXIMITY,
+    "core_plus_buriedness": CORE_PLUS_BURIEDNESS,
+    "core_plus_contact_composition": CORE_PLUS_CONTACT_COMPOSITION,
 }
 
 
@@ -108,6 +146,14 @@ all_features = [
     "fe_n_angle",
     "n_contacts",
     "n_contact_residues",
+    "ligand_centroid_fe_dist",
+    "ligand_atoms_within_4A_fe",
+    "ligand_atoms_within_5A_fe",
+    "ligand_atoms_within_6A_fe",
+    "mean_protein_neighbors_4A",
+    "mean_protein_neighbors_5A",
+    "mean_protein_neighbors_6A",
+    "max_protein_neighbors_5A",
 ]
 
 

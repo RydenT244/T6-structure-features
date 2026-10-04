@@ -179,6 +179,23 @@ def main():
                 "n_contacts": features["n_contacts"],
                 "n_contact_residues": features["n_contact_residues"],
                 "contacted_residues": features["contacted_residues"],
+                
+                "ligand_centroid_fe_dist": features["ligand_centroid_fe_dist"],
+                "ligand_atoms_within_4A_fe": features["ligand_atoms_within_4A_fe"],
+                "ligand_atoms_within_5A_fe": features["ligand_atoms_within_5A_fe"],
+                "ligand_atoms_within_6A_fe": features["ligand_atoms_within_6A_fe"],
+
+                "mean_protein_neighbors_4A": features["mean_protein_neighbors_4A"],
+                "mean_protein_neighbors_5A": features["mean_protein_neighbors_5A"],
+                "mean_protein_neighbors_6A": features["mean_protein_neighbors_6A"],
+                "max_protein_neighbors_5A": features["max_protein_neighbors_5A"],
+
+                "hydrophobic_contact_residues": features["hydrophobic_contact_residues"],
+                "aromatic_contact_residues": features["aromatic_contact_residues"],
+                "polar_contact_residues": features["polar_contact_residues"],
+                "positive_contact_residues": features["positive_contact_residues"],
+                "negative_contact_residues": features["negative_contact_residues"],
+                "other_contact_residues": features["other_contact_residues"],
 
                 "status": "OK",
                 "error": None,

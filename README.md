@@ -6,6 +6,11 @@ Current structure-derived features include:
 - total protein-ligand heavy-atom contacts
 - number of contacted protein residues
 - identities of contacted residues
+- ligand centroid distance to heme Fe
+- number of ligand atoms within 4 Å, 5 Å, and 6 Å of heme Fe
+- mean number of nearby protein atoms around each ligand atom at 4 Å, 5 Å, and 6 Å
+- maximum number of nearby protein atoms around a ligand atom at 5 Å
+- number of contacted hydrophobic, aromatic, polar, positively charged, negatively charged, and other residues
 
 These features are tested against:
 
@@ -23,7 +28,7 @@ data/
 └── poses/
     └── CYP3A4/
         ├── *.cif
-
+```
 
 
 What to run:
@@ -55,14 +60,10 @@ From analyze_residue_contacts.py
 - the most commonly contacted residues and their counts
 
 From test_structure_tree.py
-Please send the full performance table containing:
-- mean RMSE
-- standard deviation RMSE
-- mean MAE
-- standard deviation MAE
-- mean R²
-- standard deviation R²
+Please send back the full terminal output, including:
 
+- `Rows used`
+- the full `AVERAGE PERFORMANCE ACROSS RANDOM SEEDS` table
 
 
 

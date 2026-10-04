@@ -173,6 +173,210 @@ def calculate_fe_n_angle(structure):
 
     return float(angle)
 
+def calculate_heme_proximity_features(structure):
+    """
+    Calculate ligand proximity features relative to the heme iron.
+
+    Returns:
+        ligand_centroid_fe_dist:
+            Distance from the ligand centroid to heme Fe.
+
+        ligand_atoms_within_4A_fe:
+            Number of ligand heavy atoms within 4 Å of Fe.
+
+        ligand_atoms_within_5A_fe:
+            Number of ligand heavy atoms within 5 Å of Fe.
+
+        ligand_atoms_within_6A_fe:
+            Number of ligand heavy atoms within 6 Å of Fe.
+    """
+
+    fe = get_heme_iron(structure)
+    ligand = get_ligand(structure)
+
+    # Keep only ligand heavy atoms
+    ligand = ligand[ligand.element != "H"]
+
+    # --------------------------------------------------------
+    # Distance from every ligand atom to Fe
+    # --------------------------------------------------------
+
+    distances = np.linalg.norm(
+        ligand.coord - fe.coord,
+        axis=1
+    )
+
+    # --------------------------------------------------------
+    # Ligand centroid
+    # --------------------------------------------------------
+
+    ligand_centroid = np.mean(
+        ligand.coord,
+        axis=0
+    )
+
+    centroid_distance = np.linalg.norm(
+        ligand_centroid - fe.coord
+    )
+
+    # --------------------------------------------------------
+    # Count ligand atoms near Fe
+    # --------------------------------------------------------
+
+    atoms_within_4A = int(
+        np.sum(distances <= 4.0)
+    )
+
+    atoms_within_5A = int(
+        np.sum(distances <= 5.0)
+    )
+
+    atoms_within_6A = int(
+        np.sum(distances <= 6.0)
+    )
+
+    return {
+        "ligand_centroid_fe_dist": float(centroid_distance),
+        "ligand_atoms_within_4A_fe": atoms_within_4A,
+        "ligand_atoms_within_5A_fe": atoms_within_5A,
+        "ligand_atoms_within_6A_fe": atoms_within_6A,
+    }
+
+def calculate_ligand_buriedness(structure):
+    """
+    Estimate how surrounded the ligand is by protein atoms.
+
+    For each ligand heavy atom, count how many protein heavy atoms
+    are within 4, 5, and 6 Angstroms.
+
+    Returns the average number of nearby protein atoms per ligand atom.
+    Larger values mean the ligand is more buried/surrounded by protein.
+    """
+
+    protein = structure[structure.chain_id == "A"]
+    ligand = structure[structure.chain_id == "L"]
+
+    # Heavy atoms only
+    protein = protein[protein.element != "H"]
+    ligand = ligand[ligand.element != "H"]
+
+    # Pairwise distances:
+    # rows = ligand atoms
+    # columns = protein atoms
+    diff = (
+        ligand.coord[:, np.newaxis, :]
+        - protein.coord[np.newaxis, :, :]
+    )
+
+    distances = np.linalg.norm(
+        diff,
+        axis=2
+    )
+
+    # Number of nearby protein atoms for each ligand atom
+    neighbors_4A = np.sum(
+        distances <= 4.0,
+        axis=1
+    )
+
+    neighbors_5A = np.sum(
+        distances <= 5.0,
+        axis=1
+    )
+
+    neighbors_6A = np.sum(
+        distances <= 6.0,
+        axis=1
+    )
+
+    return {
+        "mean_protein_neighbors_4A": float(
+            np.mean(neighbors_4A)
+        ),
+
+        "mean_protein_neighbors_5A": float(
+            np.mean(neighbors_5A)
+        ),
+
+        "mean_protein_neighbors_6A": float(
+            np.mean(neighbors_6A)
+        ),
+
+        "max_protein_neighbors_5A": int(
+            np.max(neighbors_5A)
+        ),
+    }
+
+def calculate_contact_composition(structure):
+    """
+    Count how many contacted protein residues belong to each
+    chemical residue category.
+
+    A residue is considered contacted if at least one protein
+    heavy atom is within 4.5 Angstroms of a ligand heavy atom.
+    """
+
+    residue_contacts = get_residue_contact_counts(
+        structure,
+        cutoff=4.5
+    )
+
+    # Residue chemistry groups
+    hydrophobic = {
+        "ALA", "VAL", "LEU", "ILE", "MET"
+    }
+
+    aromatic = {
+        "PHE", "TYR", "TRP"
+    }
+
+    polar = {
+        "SER", "THR", "ASN", "GLN"
+    }
+
+    positive = {
+        "ARG", "LYS", "HIS"
+    }
+
+    negative = {
+        "ASP", "GLU"
+    }
+
+    counts = {
+        "hydrophobic_contact_residues": 0,
+        "aromatic_contact_residues": 0,
+        "polar_contact_residues": 0,
+        "positive_contact_residues": 0,
+        "negative_contact_residues": 0,
+        "other_contact_residues": 0,
+    }
+
+    for residue_label in residue_contacts.keys():
+
+        # Example:
+        # "PHE_215" -> "PHE"
+        residue_name = residue_label.split("_")[0]
+
+        if residue_name in hydrophobic:
+            counts["hydrophobic_contact_residues"] += 1
+
+        elif residue_name in aromatic:
+            counts["aromatic_contact_residues"] += 1
+
+        elif residue_name in polar:
+            counts["polar_contact_residues"] += 1
+
+        elif residue_name in positive:
+            counts["positive_contact_residues"] += 1
+
+        elif residue_name in negative:
+            counts["negative_contact_residues"] += 1
+        
+        else:
+            counts["other_contact_residues"] += 1
+
+    return counts
+
 def extract_basic_features(structure):
     """
     Extract basic T6 structure-derived features.
@@ -182,7 +386,13 @@ def extract_basic_features(structure):
     ligand = get_ligand(structure)
     fe_n_angle = calculate_fe_n_angle(structure)
 
+    heme_proximity = calculate_heme_proximity_features(structure)
+
+    buriedness = calculate_ligand_buriedness(structure)
+
     residue_contacts = get_residue_contact_counts(structure)
+
+    contact_composition = calculate_contact_composition(structure)
 
     n_contact_residues = len(residue_contacts)
 
@@ -237,7 +447,36 @@ def extract_basic_features(structure):
         "n_contacts": n_contacts,
         "n_contact_residues": n_contact_residues,
         "contacted_residues": contacted_residues,
-    }
+        "ligand_centroid_fe_dist":
+            heme_proximity["ligand_centroid_fe_dist"],
+        "ligand_atoms_within_4A_fe":
+            heme_proximity["ligand_atoms_within_4A_fe"],
+        "ligand_atoms_within_5A_fe":
+            heme_proximity["ligand_atoms_within_5A_fe"],
+        "ligand_atoms_within_6A_fe":
+            heme_proximity["ligand_atoms_within_6A_fe"],
+        "mean_protein_neighbors_4A":
+            buriedness["mean_protein_neighbors_4A"],
+        "mean_protein_neighbors_5A":
+            buriedness["mean_protein_neighbors_5A"],
+        "mean_protein_neighbors_6A":
+            buriedness["mean_protein_neighbors_6A"],
+        "max_protein_neighbors_5A":
+            buriedness["max_protein_neighbors_5A"],
+        "hydrophobic_contact_residues":
+            contact_composition["hydrophobic_contact_residues"],
+        "aromatic_contact_residues":
+            contact_composition["aromatic_contact_residues"],
+        "polar_contact_residues":
+            contact_composition["polar_contact_residues"],
+        "positive_contact_residues":
+            contact_composition["positive_contact_residues"],
+        "negative_contact_residues":
+            contact_composition["negative_contact_residues"],
+        "other_contact_residues":
+            contact_composition["other_contact_residues"],
+}
+    
 
 
 if __name__ == "__main__":
