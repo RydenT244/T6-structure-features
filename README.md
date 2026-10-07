@@ -36,6 +36,9 @@ What to run:
 
 pip install -r requirements.txt
 
+downlaod required metadatafiles:
+python src/download_data.py
+
 feature extraction:
 python src/inspect_all_cifs.py
 
